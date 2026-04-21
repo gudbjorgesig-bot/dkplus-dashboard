@@ -30,6 +30,7 @@ function daysSince(d) {
   return Math.floor((Date.now() - dt.getTime()) / 86400000);
 }
 
+
 function KpiCard({ label, value, sub, accent }) {
   return (
     <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, padding: "20px 24px", borderLeft: `4px solid ${accent}`, display: "flex", flexDirection: "column", gap: 4 }}>
@@ -97,6 +98,8 @@ export default function App() {
   const [projPage, setProjPage]   = useState(0);
   const [empPage, setEmpPage]     = useState(0);
   const [clockPage, setClockPage] = useState(0);
+  const [projSearch, setProjSearch] = useState("");
+  const [projFilter, setProjFilter] = useState("all");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -136,6 +139,21 @@ export default function App() {
   const activeRecorders = new Set(recentClock.map(e => e.Employee));
   const totalHours    = clockList.reduce((s, e) => s + Number(e.TotalHours || 0), 0);
   const activeProjects = projectList.filter(p => (p.JobStatus ?? 0) === 0);
+  const filteredProjects = projectList.filter(p => {
+  const matchesSearch =
+    (p.Name || "").toLowerCase().includes(projSearch.toLowerCase()) ||
+    (p.Number || "").toLowerCase().includes(projSearch.toLowerCase()) ||
+    (p.CustomerNameToBill || "").toLowerCase().includes(projSearch.toLowerCase());
+
+  const isActive = (p.JobStatus ?? 0) === 0;
+
+  const matchesFilter =
+    projFilter === "all" ||
+    (projFilter === "active" && isActive) ||
+    (projFilter === "closed" && !isActive);
+
+  return matchesSearch && matchesFilter;
+});
 
   const suspiciousEntries = clockList
     .filter(e => Number(e.TotalHours || 0) > 24)
@@ -159,7 +177,7 @@ export default function App() {
 
   // ── Paginated slices ──
   const sortedClock = [...clockList].sort((a, b) => new Date(b.Start || 0) - new Date(a.Start || 0));
-  const projSlice   = projectList.slice(projPage  * PER_PAGE, projPage  * PER_PAGE + PER_PAGE);
+  const projSlice   = filteredProjects.slice(projPage * PER_PAGE, projPage * PER_PAGE + PER_PAGE);
   const empSlice    = empList.slice(empPage        * PER_PAGE, empPage   * PER_PAGE + PER_PAGE);
   const clockSlice  = sortedClock.slice(clockPage  * PER_PAGE, clockPage * PER_PAGE + PER_PAGE);
 
@@ -457,7 +475,24 @@ export default function App() {
                 <KpiCard label="Lokið"  value={projectList.length - activeProjects.length} accent="#f59e0b" />
               </div>
               <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, padding: "20px 24px" }}>
+                <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
+              <input
+                value={projSearch}
+                onChange={e => { setProjSearch(e.target.value); setProjPage(0); }}
+                placeholder="Leita að verkefni..."
+                style={{ flex: 1, minWidth: 200, padding: "8px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13 }}
+              />
+              {["all","active","closed"].map((f, i) => (
+                <button key={f} onClick={() => { setProjFilter(f); setProjPage(0); }} style={{
+                  padding: "6px 14px", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                  border: projFilter === f ? "none" : "1px solid #e5e7eb",
+                  background: projFilter === f ? "#6366f1" : "#fff",
+                  color: projFilter === f ? "#fff" : "#374151",
+                }}>{["Öll","Virk","Lokið"][i]}</button>
+              ))}
+            </div>
                 <SectionHeader title="Verkefni" />
+            
                 <table style={{ width: "100%", fontSize: 13 }}>
                   <thead><tr>{["Númer","Heiti","Viðskiptavinur","Staða","Stofnað"].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
                   <tbody>
@@ -476,7 +511,7 @@ export default function App() {
                     ))}
                   </tbody>
                 </table>
-                <Pagination page={projPage} setPage={setProjPage} total={projectList.length} perPage={PER_PAGE} />
+                <Pagination page={projPage} setPage={setProjPage} total={filteredProjects.length} perPage={PER_PAGE} />
               </div>
             </div>
           )}
