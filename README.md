@@ -71,13 +71,13 @@ Verkefnið notar engan bakenda meðvitað. CRA proxy-inn í `package.json` sér 
 | Þátttaka starfsmanna | < 30% skrá tíma | Engin virkni |
 | Óvirkir starfsmenn | Virkur í kerfi en engar skráningar síðustu **90 daga** | Flaggaður með bleikum bakgrunni |
 | Verkefnaheilsa | Virkt verkefni með 0 tíma skráða | „Engin virkni" — merkt með gulum bakgrunni |
-| Há háð á viðskiptavini | Einn viðskiptavinur stendur fyrir > 50% allra skráðra tíma | „Áhætta" stöðukort í Stöðumat |
+| Óhóflegt hlutfall | Einn viðskiptavinur stendur fyrir > 50% allra skráðra tíma | „Áhætta" stöðukort í Stöðumat |
 | Viðskiptavinur án verkefna | Enginn verkefni tengd viðskiptavini | Flaggaður í viðskiptavinaflipa |
 | Grunsamlegar skráningar | TotalHours > 24h í einni færslu | Merkt með gulum bakgrunni í nýjustu skráningum |
 
 ## Þróun — mælikvarðar (src/api.js)
 
-Allar viðmiðunarmörk eru skilgreindar í `THRESHOLDS` hlutnum í `src/api.js` og eru lesnar í gegnum alla components — ekki harðkóðaðar víðs vegar.
+Öll viðmiðunarmörk eru skilgreind í `THRESHOLDS` hlutnum í `src/api.js` og eru lesnar í gegnum alla components — ekki harðkóðaðar víðs vegar.
 
 | Mælikvarði | Sjálfgefið gildi |
 |---|---|
