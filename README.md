@@ -1,6 +1,6 @@
 # dkPlus ERP Dashboard
 
-React dashboard sem sækir gögn beint úr dkPlus REST API og sýnir helstu lykilupplýsingar fyrirtækisins í rauntíma.
+React dashboard sem sækir gögn beint úr dkPlus REST API og sýnir helstu lykilupplýsingar fyrirtækisins í rauntíma á fjórum flipum.
 
 ## Keyrsla
 
@@ -36,16 +36,27 @@ Verkefnið notar engan bakenda meðvitað. CRA proxy-inn í `package.json` sér 
 
 | Endpoint | Tilgangur |
 |---|---|
-| `GET /general/employee` | Starfsmenn — nafn, númer, staða |
+| `GET /general/employee` | Starfsmenn — nafn, númer, staða (virk/óvirk) |
 | `GET /TimeClock/entries` | Tímaskráningar — upphaf, lok, heildartímar, verkefni |
 | `GET /project` | Verkefni — heiti, viðskiptavinur, staða, stofndagur |
+| `GET /customer` | Viðskiptavinir — nafn, númer, staða (virk/óvirk) |
 
 Öll köll eru gerð samhliða með `Promise.allSettled` — ef einn endpoint bregst mun dashboardið birtast með þeim gögnum sem eru til.
+
+## Flipar
+
+| Flipi | Innihald |
+|---|---|
+| **Yfirlit** | KPI kort, stöðumat, þátttaka-mælikvarði, virkustu starfsmenn, virkustu viðskiptavinir, nýjustu skráningar, viðskiptavinir án verkefna |
+| **Starfsmenn** | Þátttakamælikvarði, tafla yfir alla starfsmenn með síðasta skráningartíma og virknilit |
+| **Verkefni** | KPI kort, leit og síun, tafla yfir öll verkefni með skráða tíma og stöðumerki |
+| **Viðskiptavinir** | KPI kort, leit og síun, tafla yfir alla viðskiptavini með stöðu og verkefnatengingu |
 
 ## Forsendur
 
 - **Virkur starfsmaður**: `Status === 0`
 - **Virkt verkefni**: `JobStatus === 0`
+- **Virkur viðskiptavinur**: `Status === 0`
 - **Nýleg tímaskráning**: `Start` dagsetning er innan 30 daga
 
 ## Business logic reglur
@@ -58,11 +69,29 @@ Verkefnið notar engan bakenda meðvitað. CRA proxy-inn í `package.json` sér 
 | Þátttaka starfsmanna | 50–69% skrá tíma | Lítil virkni |
 | Þátttaka starfsmanna | 30–49% skrá tíma | Möguleg vandamál |
 | Þátttaka starfsmanna | < 30% skrá tíma | Engin virkni |
-| Grunsamlegar skráningar | TotalHours > 24h í einni færslu | Athugið |
+| Óvirkir starfsmenn | Virkur í kerfi en engar skráningar síðustu **90 daga** | Flaggaður með bleikum bakgrunni |
+| Verkefnaheilsa | Virkt verkefni með 0 tíma skráða | „Engin virkni" — merkt með gulum bakgrunni |
+| Há háð á viðskiptavini | Einn viðskiptavinur stendur fyrir > 50% allra skráðra tíma | „Áhætta" stöðukort í Stöðumat |
+| Viðskiptavinur án verkefna | Enginn verkefni tengd viðskiptavini | Flaggaður í viðskiptavinaflipa |
+| Grunsamlegar skráningar | TotalHours > 24h í einni færslu | Merkt með gulum bakgrunni í nýjustu skráningum |
+
+## Þróun — mælikvarðar (src/api.js)
+
+Allar viðmiðunarmörk eru skilgreindar í `THRESHOLDS` hlutnum í `src/api.js` og eru lesnar í gegnum alla components — ekki harðkóðaðar víðs vegar.
+
+| Mælikvarði | Sjálfgefið gildi |
+|---|---|
+| `activityWarningDays` | 14 dagar |
+| `activityCriticalDays` | 30 dagar |
+| `inactiveDays` | 90 dagar |
+| `participationGoodPct` | 70% |
+| `participationLowPct` | 50% |
+| `participationIssuePct` | 30% |
+| `suspiciousHours` | 24 tímar |
 
 ## Næstu skref
 
-1. **Sjálfvirk vöktun** — cron-job sem keyrir daglega og sendir Slack/email ef stöðumat versnar
+1. **Sjálfvirk vöktun** — cron-job sem keyrir daglega og sendir tilkynningu ef stöðumat versnar
 2. **Backend proxy** — fjarlægja hardcoded API token, geyma í environment variables
 3. **Fleiri endpoints** — reikningar, launakeyrsla, birgðir
 4. **Samanburður** — þróun tímaskráninga milli mánaða
